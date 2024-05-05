@@ -213,10 +213,6 @@ body {
     const userInput = document.getElementById('field-name').value;
     console.log("calling api");
     const responseBlock = document.createElement('div');
-        responseBlock.className = 'response-block';
-        responseBlock.innerHTML = `<p>New Response Added</p>`;
-        const container = document.querySelector('.container');
-        container.appendChild(responseBlock);
     fetch('https://www.doctalker.onrender.com/api/querybyweb', {
         method: 'POST',
         body: JSON.stringify({ query: userInput }),
@@ -227,6 +223,8 @@ body {
         console.log(data);
         const responseBlock = document.getElementById('response-block');
         responseBlock.innerHTML = `<p>${data}</p>`;
+        const container = document.querySelector('.container');
+        container.appendChild(responseBlock);
     })
     .catch(error => {
         console.error('Error sending data:', error);
