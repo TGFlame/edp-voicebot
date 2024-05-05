@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Input</title>
+    <style>
+       * {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #1d1e1f;
+  color: #d2d2d2;
+  font-family: 'Arial', sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px;
+  
+}
+
+.container h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+.control-wrapper {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.control {
+  width: 350px;
+  background: #3d3d3e;
+  border: solid 1px #292A2B;
+  line-height: 1.2;
+  font-size: 16px;
+  color: #d2d2d2;
+  padding: 13px 10px;
+  border-radius: 2px;
+  outline: none;
+}
+
+.control_input {
+  caret-color: white;
+
+  &:focus, &:not(:placeholder-shown) {
+    border-color:#00ffff;
+    
+    &+.control__placeholder {
+      top: -11px;
+      font-size: 12px;
+      color: #00ffff;
+      background: linear-gradient(rgba(41, 42, 43, 0) 50%,rgba(61, 61, 62, 1) 50%);
+    }
+  }
+}
+
+.control_button {
+  cursor: pointer;
+  background: #00ffff;
+  color: #1d1e1f;
+  transition: all 0.2s ease;
+  
+  &:focus, &:hover, &.control-button__submitted {
+    background: #1d1e1f;
+    border-color: #00ffff;
+    color: #00ffff;
+  }
+}
+
+.control__placeholder {
+  position: absolute;
+  left: 10px;
+  top: 11px;
+  padding: 3px;
+  font-size: 16px;
+  line-height: 1.2;
+  color: #d2d2d2;
+  transition: 0.2s ease;
+}
+
+.actions-container {
+  margin-top: 20px
+}
+.response-block {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #3d3d3e;
+    border: solid 1px #292A2B;
+    border-radius: 2px;
+    font-size: 16px;
+    color: #d2d2d2;
+  }
+
+  .response-block p {
+    margin: 0;
+  }
+    </style>
+   
+</head>
+<body>
+  <div class="container">
+  <h1>Hello I am a Bot designed for IIITDMJ. What would you like to do?</h1> 
+  <div class="control-wrapper">
+    <input class="control control_input" placeholder=" " value="" type="text" id="field-name" />
+    <div class="control__placeholder">Ask Question</div>
+  </div>
+  <div class="control-wrapper actions-container">
+    <button id="button-submit" class="control control_button">Say "Submit"</button>
+  </div>
+  <div class="control-wrapper actions-container">
+    <button id="button-start-main" class="control control_button">Start</button>
+    <button id="button-stop-main" class="control control_button" ">Stop</button>
+  </div>
+</div>
+
+  <script>
+  const inputElement = document.getElementById('field-name');
+  const submitElement = document.getElementById('button-submit');
+  
+  class RecognitionManager {
+      constructor() {
+          this.isStarted = false;
+          this.subscriber = null;
+  
+          const SpeechRecognition = window.speechRecognition || window.webkitSpeechRecognition;
+          this.recognition = new SpeechRecognition();
+          this.recognition.continuous = true;
+          this.recognition.lang = 'en-US';
+  
+          this.recognition.onstart = this.startHandler;
+          this.recognition.onend = this.endHandler;
+          this.recognition.onerror = this.endHandler;
+          this.recognition.onresult = this.resultHandler;
+      }
+  
+      subscribe(handler) {
+          this.subscriber = handler;
+      }
+  
+      start() {
+          console.log('start');
+          this.recognition.start();
+      }
+  
+      stop() {
+          console.log('end');
+          this.recognition.stop();
+      }
+  
+      startHandler = () => {
+          this.isStarted = true;
+      }
+      endHandler = () => {
+          this.isStarted = false;
+      }
+      resultHandler = (event) => {
+          this.isStarted = false;
+  
+          console.log(event);
+          const current = event.resultIndex;
+          const transcript = event.results[current][0].transcript.trim();
+          this.subscriber && this.subscriber(transcript);
+      }
+  }
+  
+  const customHandler = (text) => {
+      if (text === 'submit') {
+          submitElement.focus();
+          SubmitHandler(text);
+      } else {
+          submitElement.blur();
+          inputElement.value = text;
+      }
+      console.log(text);
+  }
+  
+  const recognitionManager = new RecognitionManager();
+  recognitionManager.subscribe(customHandler);
+  const startBtn = document.querySelector("#button-start-main");
+  const stopBtn = document.querySelector("#button-stop-main");
+  startBtn.addEventListener("click", () => {
+      recognitionManager.start();
+  });
+
+      stopBtn.addEventListener("click", () => {
+       recognitionManager.stop();
+  });
+  submitElement.addEventListener("click", () =>
+{
+  SubmitHandler();
+});
+  
+  
+  // function focusHandler(event) {
+  //     console.log('Field focus');
+  //     // if (!recognitionManager.isStarted) {
+  //     //     recognitionManager.start();
+  //     // }
+  // }
+  
+  // function blurHandler(event) {
+  //     console.log('Field blur');
+  //     // recognitionManager.stop();
+  // }
+  
+  inputElement.addEventListener('focus', focusHandler);
+  function SubmitHandler() {
+    const userInput = document.getElementById('field-name').value;
+    console.log("calling api");
+    const responseBlock = document.createElement('div');
+        responseBlock.className = 'response-block';
+        responseBlock.innerHTML = `<p>New Response Added</p>`;
+        const container = document.querySelector('.container');
+        container.appendChild(responseBlock);
+    fetch('https://www.doctalker.onrender.com/api/querybyweb', {
+        method: 'POST',
+        body: JSON.stringify({ query: userInput }),
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        const responseBlock = document.getElementById('response-block');
+        responseBlock.innerHTML = `<p>${data}</p>`;
+    })
+    .catch(error => {
+        console.error('Error sending data:', error);
+    });
+};
+    
+
+
+      </script>  
+</body>
+</html>
